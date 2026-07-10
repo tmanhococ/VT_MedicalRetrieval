@@ -2,14 +2,18 @@ import re
 
 NEGATION_TRIGGERS = [
     r"không\s+có", r"chưa\s+phát\s+hiện", r"không\s+ghi\s+nhận",
-    r"âm\s+tính", r"loại\s+trừ", r"chưa\s+từng", r"không\s+thấy"
+    r"âm\s+tính", r"loại\s+trừ", r"chưa\s+từng", r"không\s+thấy",
+    r"\bkhông\b", r"không\s+bị"
 ]
 
 HISTORICAL_TRIGGERS = [
     r"tiền\s+sử", r"lịch\s+sử", r"năm\s+\d{4}", r"trước\s+đây"
 ]
 
-TERMINATORS = [r"\.", r"\,", r"nhưng", r"tuy\s+nhiên", r"và"]
+TERMINATORS = [
+    r"\.", r"nhưng", r"tuy\s+nhiên", r"và",
+    r"\bbut\b", r"\bhowever\b", r"\band\b"
+]
 
 class NegExVerifier:
     @staticmethod
@@ -25,9 +29,10 @@ class NegExVerifier:
         
         # Kiểm tra nếu bị ngăn bởi ngắt câu
         for term in TERMINATORS:
-            if re.search(term, pre_context):
+            term_re = re.compile(term, re.IGNORECASE)
+            if term_re.search(pre_context):
                 # Cắt bớt phần sau Terminator
-                pre_context = re.split(term, pre_context)[-1]
+                pre_context = term_re.split(pre_context)[-1]
                 
         # Kiểm tra trigger phủ định
         for trig in NEGATION_TRIGGERS:
@@ -42,3 +47,4 @@ class NegExVerifier:
                     ent_copy["assertions"].append("isHistorical")
                     
         return ent_copy
+
