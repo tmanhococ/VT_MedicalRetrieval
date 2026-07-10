@@ -6,7 +6,15 @@ class PositionResolver:
         resolved_entities = []
         for ent in entities:
             ent_text = ent["text"]
-            # Tìm kiếm vị trí tối ưu trong raw_text
+            
+            # Quick exact match lookup first
+            idx = raw_text.find(ent_text)
+            if idx != -1:
+                ent_copy = ent.copy()
+                ent_copy["position"] = [idx, idx + len(ent_text)]
+                resolved_entities.append(ent_copy)
+                continue
+                
             best_match = None
             best_score = 0.0
             best_pos = None

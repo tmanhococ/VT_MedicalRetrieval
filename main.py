@@ -41,11 +41,12 @@ OUTPUT_SCHEMA = {
     }
 }
 
-def run_pipeline_for_text(text):
+def run_pipeline_for_text(text, extractor=None):
     # Step 1: Parser
     blocks = StructuralParser.segment(text)
     all_entities = []
-    extractor = LLMExtractor()
+    if extractor is None:
+        extractor = LLMExtractor()
     
     for block in blocks:
         # Tiền xử lý chữ dính cho block gửi đi
@@ -82,18 +83,30 @@ def main():
     output_dir = Config.OUTPUT_DIR
     os.makedirs(output_dir, exist_ok=True)
     
+    # Issue 2: Clear old JSON outputs
+    for filename in os.listdir(output_dir):
+        if filename.endswith(".json"):
+            try:
+                os.remove(os.path.join(output_dir, filename))
+            except Exception as e:
+                print(f"Could not remove old file {filename}: {e}")
+                
+    # Issue 1: Instantiate LLMExtractor once
+    extractor = LLMExtractor()
+    
     for filename in os.listdir(input_dir):
         if filename.endswith(".txt"):
             idx = filename.split(".")[0]
             with open(os.path.join(input_dir, filename), "r", encoding="utf-8") as f:
                 text = f.read()
             
-            result = run_pipeline_for_text(text)
+            result = run_pipeline_for_text(text, extractor=extractor)
             
             try:
                 jsonschema.validate(instance=result, schema=OUTPUT_SCHEMA)
             except jsonschema.ValidationError as e:
                 print(f"Validation error for record {idx}: {e}")
+                raise e
             
             out_file = os.path.join(output_dir, f"{idx}.json")
             with open(out_file, "w", encoding="utf-8") as out_f:

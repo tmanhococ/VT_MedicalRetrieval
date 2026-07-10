@@ -15,7 +15,7 @@ def test_historical_detection():
 def test_capitalized_terminator():
     # Capitalized "Nhưng" should terminate the negation propagation
     raw_text = "Không có sốt Nhưng bệnh nhân bị đau đầu."
-    entity = {"text": "đau đầu", "position": [31, 38], "assertions": []}
+    entity = {"text": "đau đầu", "position": [32, 39], "assertions": []}
     verified = NegExVerifier.verify_entity(raw_text, entity)
     assert "isNegated" not in verified["assertions"]
 
@@ -29,7 +29,7 @@ def test_comma_non_terminator():
 def test_english_terminators():
     # "but", "however", "and" should terminate propagation
     raw_text = "Không có sốt but bệnh nhân bị đau đầu."
-    entity = {"text": "đau đầu", "position": [31, 38], "assertions": []}
+    entity = {"text": "đau đầu", "position": [32, 39], "assertions": []}
     verified = NegExVerifier.verify_entity(raw_text, entity)
     assert "isNegated" not in verified["assertions"]
 
