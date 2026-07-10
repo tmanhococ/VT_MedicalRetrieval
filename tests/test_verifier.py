@@ -46,3 +46,32 @@ def test_expanded_negation_triggers():
     verified = NegExVerifier.verify_entity(raw_text, entity)
     assert "isNegated" in verified["assertions"]
 
+def test_no_subword_boundary_splits():
+    # "vào" should not match terminator "và", so negation propagates
+    raw_text = "Không ghi nhận bệnh nhân vào viện vì sốt."
+    entity = {"text": "sốt", "position": [37, 40], "assertions": []}
+    verified = NegExVerifier.verify_entity(raw_text, entity)
+    assert "isNegated" in verified["assertions"]
+
+def test_post_negation_triggers():
+    # "sốt xuất huyết âm tính" should be negated
+    raw_text = "Bệnh nhân có kết quả xét nghiệm sốt xuất huyết âm tính."
+    entity = {"text": "sốt xuất huyết", "position": [32, 46], "assertions": []}
+    verified = NegExVerifier.verify_entity(raw_text, entity)
+    assert "isNegated" in verified["assertions"]
+
+def test_line_break_terminator():
+    # "\n" should terminate propagation
+    raw_text = "Không có ho\nSốt cao 39 độ."
+    entity = {"text": "Sốt cao", "position": [12, 19], "assertions": []}
+    verified = NegExVerifier.verify_entity(raw_text, entity)
+    assert "isNegated" not in verified["assertions"]
+
+def test_deep_copy_assertions():
+    # Mutating returned entity assertions should not affect original entity assertions
+    raw_text = "Không có sốt."
+    entity = {"text": "sốt", "position": [9, 12], "assertions": ["existing_assertion"]}
+    verified = NegExVerifier.verify_entity(raw_text, entity)
+    assert "isNegated" in verified["assertions"]
+    assert "isNegated" not in entity["assertions"]
+    assert len(entity["assertions"]) == 1
