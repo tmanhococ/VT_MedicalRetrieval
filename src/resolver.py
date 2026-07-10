@@ -12,16 +12,18 @@ class PositionResolver:
             best_pos = None
             
             n_chars = len(ent_text)
+            e_clean = ent_text.replace(" ", "")
+            
+            min_l = max(1, n_chars - 5)
+            max_l = n_chars + 5
+            
             # Cắt cửa sổ trượt để so sánh độ tương đồng
-            for i in range(max(0, len(raw_text) - n_chars + 5)):
-                for l in range(max(1, n_chars - 5), n_chars + 5):
-                    if i + l > len(raw_text):
-                        continue
+            for l in range(min_l, max_l):
+                for i in range(max(0, len(raw_text) - l + 1)):
                     candidate = raw_text[i:i+l]
                     # Tính toán edit distance mờ (rapidfuzz)
                     # Giảm trọng số của khoảng trắng bằng cách làm sạch khoảng trắng trước khi đo
                     c_clean = candidate.replace(" ", "")
-                    e_clean = ent_text.replace(" ", "")
                     score = Levenshtein.normalized_similarity(c_clean, e_clean)
                     
                     if score > best_score:

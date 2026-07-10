@@ -32,3 +32,13 @@ def test_resolve_position_short_text():
     assert len(resolved) == 1
     assert resolved[0]["position"] == [10, 12]
     assert resolved[0]["text"] == "ho"
+
+def test_resolve_position_tie_breaker():
+    raw_text = "Bệnh nhân bị sốtcao và sốt cao nhẹ."
+    # LLM sinh "sốt cao"
+    entities = [{"text": "sốt cao", "type": "TRIỆU_CHỨNG"}]
+    resolved = PositionResolver.resolve(raw_text, entities)
+    assert len(resolved) == 1
+    # Nên khớp "sốt cao" tại indices [23, 30] thay vì "sốtcao" tại [13, 19]
+    assert resolved[0]["text"] == "sốt cao"
+    assert resolved[0]["position"] == [23, 30]
