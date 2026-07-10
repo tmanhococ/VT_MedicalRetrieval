@@ -4,13 +4,14 @@ from src.config import Config
 
 # GBNF Grammar String to enforce JSON schema output
 GBNF_GRAMMAR = r"""
-root ::= object
-object ::= "{" ws ( "text" ":" string "," ws "type" ":" type_enum "," ws "assertions" ":" array_str "," ws "med_brand" ":" (string | "null") "," ws "med_ingredient" ":" (string | "null") "," ws "med_strength" ":" (string | "null") "," ws "med_form" ":" (string | "null") ) "}"
+root ::= "[" ws ( object ( "," ws object )* )? ws "]"
+object ::= "{" ws ( "text" ws ":" ws string "," ws "type" ws ":" ws type_enum "," ws "assertions" ws ":" ws array_str "," ws "med_brand" ws ":" ws (string | "null") "," ws "med_ingredient" ws ":" ws (string | "null") "," ws "med_strength" ws ":" ws (string | "null") "," ws "med_form" ws ":" ws (string | "null") ) "}"
 array_str ::= "[" ws ( string ( "," ws string )* )? ws "]"
 type_enum ::= "\"TRIỆU_CHỨNG\"" | "\"TÊN_XÉT_NGHIỆM\"" | "\"KẾT_QUẢ_XÉT_NGHIỆM\"" | "\"CHẨN_ĐOÁN\"" | "\"THUỐC\""
 string ::= "\"" ([^"\\] | "\\" [\"\\/bfnrt] | "\\u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F])* "\""
 ws ::= [ \t\n\r]*
 """
+
 
 class LLMExtractor:
     @staticmethod

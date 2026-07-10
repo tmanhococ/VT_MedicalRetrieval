@@ -25,7 +25,7 @@ def test_extract_with_mock_llm():
     mock_response = {
         "choices": [
             {
-                "text": '{"text": "sốt cao", "type": "TRIỆU_CHỨNG", "assertions": [], "med_brand": null, "med_ingredient": null, "med_strength": null, "med_form": null}'
+                "text": '[{"text": "sốt cao", "type": "TRIỆU_CHỨNG", "assertions": [], "med_brand": null, "med_ingredient": null, "med_strength": null, "med_form": null}, {"text": "đau đầu", "type": "TRIỆU_CHỨNG", "assertions": [], "med_brand": null, "med_ingredient": null, "med_strength": null, "med_form": null}]'
             }
         ]
     }
@@ -37,10 +37,12 @@ def test_extract_with_mock_llm():
         "default_assertion_hint": []
     }
     entities = extractor.extract(block)
-    assert len(entities) == 1
+    assert len(entities) == 2
     assert entities[0]["text"] == "sốt cao"
     assert entities[0]["type"] == "TRIỆU_CHỨNG"
-    assert entities[0]["med_brand"] is None
+    assert entities[1]["text"] == "đau đầu"
+    assert entities[1]["type"] == "TRIỆU_CHỨNG"
+
 
 def test_extract_invalid_json():
     extractor = LLMExtractor()
