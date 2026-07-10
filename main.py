@@ -1,12 +1,45 @@
 import os
 import json
 import zipfile
+import jsonschema
 from src.parser import StructuralParser
 from src.extractor import LLMExtractor
 from src.resolver import PositionResolver
 from src.verifier import NegExVerifier
 from src.linker import CandidateLinker
 from src.config import Config
+
+OUTPUT_SCHEMA = {
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "text": {"type": "string"},
+            "position": {
+                "type": "array",
+                "items": {"type": "integer"},
+                "minItems": 2,
+                "maxItems": 2
+            },
+            "type": {
+                "type": "string",
+                "enum": ["TRIỆU_CHỨNG", "TÊN_XÉT_NGHIỆM", "KẾT_QUẢ_XÉT_NGHIỆM", "CHẨN_ĐOÁN", "THUỐC"]
+            },
+            "assertions": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": ["isNegated", "isHistorical", "isFamily"]
+                }
+            },
+            "candidates": {
+                "type": "array",
+                "items": {"type": "string"}
+            }
+        },
+        "required": ["text", "position", "type", "assertions", "candidates"]
+    }
+}
 
 def run_pipeline_for_text(text):
     # Step 1: Parser
@@ -56,6 +89,11 @@ def main():
                 text = f.read()
             
             result = run_pipeline_for_text(text)
+            
+            try:
+                jsonschema.validate(instance=result, schema=OUTPUT_SCHEMA)
+            except jsonschema.ValidationError as e:
+                print(f"Validation error for record {idx}: {e}")
             
             out_file = os.path.join(output_dir, f"{idx}.json")
             with open(out_file, "w", encoding="utf-8") as out_f:

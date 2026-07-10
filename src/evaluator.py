@@ -31,8 +31,12 @@ def evaluate():
             # Simple calculation of text match similarity via word error rate
             gt_texts = " ".join([e["text"] for e in gt_data])
             pred_texts = " ".join([e["text"] for e in pred_data])
-            if gt_texts or pred_texts:
-                total_wer += wer(gt_texts, pred_texts)
+            if not gt_texts:
+                # If both are empty, WER is 0.0 (no error). If predictions exist, WER is 1.0 (maximum error).
+                wer_score = 0.0 if not pred_texts else 1.0
+            else:
+                wer_score = wer(gt_texts, pred_texts)
+            total_wer += wer_score
             count += 1
             
     avg_wer = total_wer / count if count > 0 else 0
