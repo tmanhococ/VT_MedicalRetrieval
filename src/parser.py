@@ -12,18 +12,23 @@ HEADER_RULES = {
         "default_assertion_hint": ["isHistorical"]
     },
     "CURRENT_HISTORY": {
-        "regex": r"^\d+[\.\s]+bệnh\s+sử(.*?)$|^\d+[\.\s]+tiền\s+sử\s+bệnh\s+hiện\s+tại(.*?)$|^\d+[\.\s]+tiền\s+sử\s+bệnh\s+bệnh\s+hiện\s+tại(.*?)$|^\d+[\.\s]+lịch\s+sử\s+bệnh\s+hiện\s+tại(.*?)$",
+        "regex": r"^(?:\d+[\.\s]+)?bệnh\s+sử(.*?)$|^(?:\d+[\.\s]+)?tiền\s+sử\s+bệnh\s+hiện\s+tại(.*?)$|^(?:\d+[\.\s]+)?tiền\s+sử\s+bệnh\s+bệnh\s+hiện\s+tại(.*?)$|^(?:\d+[\.\s]+)?lịch\s+sử\s+bệnh\s+hiện\s+tại(.*?)$",
         "default_type_hint": None,
         "default_assertion_hint": []
     },
     "SYMPTOMS": {
-        "regex": r"^[\*\-\s]*triệu\s+chứng\s+hiện\s+tại(.*?)$|^[\*\-\s]*triệu\s+chứng\s+khi\s+nhập\s+viện(.*?)$",
+        "regex": r"^[\*\-\s]*(?:các\s+)?triệu\s+chứng\s+hiện\s+tại(.*?)$|^[\*\-\s]*(?:các\s+)?triệu\s+chứng\s+khi\s+nhập\s+viện(.*?)$",
         "default_type_hint": "TRIỆU_CHỨNG",
         "default_assertion_hint": []
     },
     "LABS": {
         "regex": r"^[\*\-\s]*kết\s+quả\s+xét\s+nghiệm(.*?)$|^[\*\-\s]*cận\s+lâm\s+sàng(.*?)$|^[\*\-\s]*kết\s+quả\s+chẩn\s+đoán\s+hình\s+ảnh(.*?)$",
         "default_type_hint": "TÊN_XÉT_NGHIỆM",
+        "default_assertion_hint": []
+    },
+    "DIAGNOSIS": {
+        "regex": r"^[\*\-\s]*(?:các\s+)?phát\s+hiện\s+chẩn\s+đoán\s+khác(.*?)$|^[\*\-\s]*(?:chẩn\s+đoán|chẩn\s+đoán\s+sơ\s+bộ)(.*?)$",
+        "default_type_hint": "CHẨN_ĐOÁN",
         "default_assertion_hint": []
     },
     "HOSPITAL_EVALUATION": {
@@ -36,6 +41,9 @@ HEADER_RULES = {
 class StructuralParser:
     @staticmethod
     def segment(text):
+        if not text:
+            return []
+            
         lines = text.splitlines()
         blocks = []
         current_block = None
@@ -43,6 +51,14 @@ class StructuralParser:
         for line in lines:
             line_stripped = line.strip()
             if not line_stripped:
+                if not current_block:
+                    current_block = {
+                        "section_type": "UNSTRUCTURED",
+                        "default_type_hint": None,
+                        "default_assertion_hint": [],
+                        "lines": []
+                    }
+                current_block["lines"].append(line)
                 continue
             
             matched_category = None
@@ -103,16 +119,16 @@ class StructuralParser:
                     
         text = "".join(result)
         
-        # Sửa các lỗi dính chữ thường gặp thông dụng
+        # Sửa các lỗi dính chữ thường gặp thông dụng và bảo tồn case
         common_errors = {
-            "tiềnsử": "tiền sử",
-            "bệnhsử": "bệnh sử",
-            "nhậpviện": "nhập viện",
-            "tiếpsử": "tiếp sử",
-            "dùngthuốc": "dùng thuốc",
-            "bịđau": "bị đau",
-            "sửdùng": "sử dùng"
+            "tiềnsử": "tiền sử", "Tiềnsử": "Tiền sử", "TIỀNSỬ": "TIỀN SỬ",
+            "bệnhsử": "bệnh sử", "Bệnhsử": "Bệnh sử", "BỆNHSỬ": "BỆNH SỬ",
+            "nhậpviện": "nhập viện", "Nhậpviện": "Nhập viện", "NHẬPVIỆN": "NHẬP VIỆN",
+            "tiếpsử": "tiếp sử", "Tiếpsử": "Tiếp sử", "TIẾPSỬ": "TIẾP SỬ",
+            "dùngthuốc": "dùng thuốc", "Dùngthuốc": "Dùng thuốc", "DÙNGTHUỐC": "DÙNG THUỐC",
+            "bịđau": "bị đau", "Bịđau": "Bị đau", "BỊĐAU": "BỊ ĐAU",
+            "sửdùng": "sử dùng", "Sửdùng": "Sử dùng", "SỬDỤNG": "SỬ DỤNG"
         }
         for err, corr in common_errors.items():
-            text = re.sub(re.escape(err), corr, text, flags=re.IGNORECASE)
+            text = text.replace(err, corr)
         return text
