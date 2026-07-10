@@ -1,4 +1,14 @@
-from src.extractor import LLMExtractor
+from src.extractor import LLMExtractor, GBNF_GRAMMAR
+
+def test_grammar_compilation():
+    try:
+        from llama_cpp import LlamaGrammar
+        grammar = LlamaGrammar.from_string(GBNF_GRAMMAR)
+        assert grammar is not None
+    except ImportError:
+        import pytest
+        pytest.skip("llama_cpp is not installed")
+
 
 def test_prompt_generation():
     block = {
@@ -29,7 +39,7 @@ def test_extract_with_mock_llm():
             }
         ]
     }
-    extractor.llm = lambda prompt, max_tokens, grammar: mock_response
+    extractor.llm = lambda prompt, **kwargs: mock_response
     
     block = {
         "content": "Bệnh nhân sốt cao.",
@@ -53,7 +63,7 @@ def test_extract_invalid_json():
             }
         ]
     }
-    extractor.llm = lambda prompt, max_tokens, grammar: mock_response
+    extractor.llm = lambda prompt, **kwargs: mock_response
     
     block = {
         "content": "Bệnh nhân sốt cao.",
@@ -62,4 +72,5 @@ def test_extract_invalid_json():
     }
     entities = extractor.extract(block)
     assert entities == []
+
 

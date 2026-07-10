@@ -13,4 +13,8 @@ class Config:
     
     # Device Config (Set 0 for CPU, -1 for Colab GPU offload all layers)
     GPU_LAYERS_OFFLOAD = int(os.environ.get("GPU_LAYERS_OFFLOAD", -1 if os.environ.get("COLAB_GPU") else 0))
+    
+    # Context Length
+    LLM_CTX_LENGTH = int(os.environ.get("LLM_CTX_LENGTH", 2048))
+
 

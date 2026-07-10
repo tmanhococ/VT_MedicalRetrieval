@@ -5,8 +5,9 @@ from src.config import Config
 # GBNF Grammar String to enforce JSON schema output
 GBNF_GRAMMAR = r"""
 root ::= "[" ws ( object ( "," ws object )* )? ws "]"
-object ::= "{" ws ( "text" ws ":" ws string "," ws "type" ws ":" ws type_enum "," ws "assertions" ws ":" ws array_str "," ws "med_brand" ws ":" ws (string | "null") "," ws "med_ingredient" ws ":" ws (string | "null") "," ws "med_strength" ws ":" ws (string | "null") "," ws "med_form" ws ":" ws (string | "null") ) "}"
-array_str ::= "[" ws ( string ( "," ws string )* )? ws "]"
+object ::= "{" ws ( "\"text\"" ws ":" ws string "," ws "\"type\"" ws ":" ws type_enum "," ws "\"assertions\"" ws ":" ws array_assertion "," ws "\"med_brand\"" ws ":" ws (string | "null") "," ws "\"med_ingredient\"" ws ":" ws (string | "null") "," ws "\"med_strength\"" ws ":" ws (string | "null") "," ws "\"med_form\"" ws ":" ws (string | "null") ) "}"
+array_assertion ::= "[" ws ( assertion_enum ( "," ws assertion_enum )* )? ws "]"
+assertion_enum ::= "\"isNegated\"" | "\"isHistorical\"" | "\"isFamily\""
 type_enum ::= "\"TRIỆU_CHỨNG\"" | "\"TÊN_XÉT_NGHIỆM\"" | "\"KẾT_QUẢ_XÉT_NGHIỆM\"" | "\"CHẨN_ĐOÁN\"" | "\"THUỐC\""
 string ::= "\"" ([^"\\] | "\\" [\"\\/bfnrt] | "\\u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F])* "\""
 ws ::= [ \t\n\r]*
@@ -29,6 +30,22 @@ Yêu cầu nghiêm ngặt:
 3. Xác định trạng thái Assertions nếu có: isNegated (bị phủ định), isHistorical (tiền sử), isFamily (người thân mắc).
 4. Nếu nhãn là THUỐC, hãy tách thêm: med_brand (biệt dược), med_ingredient (hoạt chất), med_strength (hàm lượng), med_form (dạng bào chế). Nếu không có thì để null.
 
+Ví dụ 1:
+Văn bản: "Bệnh nhân không bị ho, nhưng có tiền sử gia đình bị đái tháo đường."
+Kết quả JSON:
+[
+  {{"text": "ho", "type": "TRIỆU_CHỨNG", "assertions": ["isNegated"], "med_brand": null, "med_ingredient": null, "med_strength": null, "med_form": null}},
+  {{"text": "đái tháo đường", "type": "CHẨN_ĐOÁN", "assertions": ["isFamily"], "med_brand": null, "med_ingredient": null, "med_strength": null, "med_form": null}}
+]
+
+Ví dụ 2:
+Văn bản: "Kê đơn Panadol 500mg viên sủi và uống cùng hoạt chất Paracetamol."
+Kết quả JSON:
+[
+  {{"text": "Panadol 500mg viên sủi", "type": "THUỐC", "assertions": [], "med_brand": "Panadol", "med_ingredient": null, "med_strength": "500mg", "med_form": "viên sủi"}},
+  {{"text": "Paracetamol", "type": "THUỐC", "assertions": [], "med_brand": null, "med_ingredient": "Paracetamol", "med_strength": null, "med_form": null}}
+]
+
 Gợi ý phân khu hiện tại:
 - Nhãn ưu tiên: {type_hint}
 - Assertion mặc định: {assertion_hint}
@@ -46,13 +63,16 @@ Hãy trả về kết quả dưới dạng danh sách thực thể JSON khớp c
 
     def load_model(self):
         if not self.llm and os.path.exists(Config.LLM_MODEL_PATH):
-            from llama_cpp import Llama
-            self.llm = Llama(
-                model_path=Config.LLM_MODEL_PATH,
-                n_gpu_layers=Config.GPU_LAYERS_OFFLOAD,
-                n_ctx=2048,
-                verbose=False
-            )
+            try:
+                from llama_cpp import Llama
+                self.llm = Llama(
+                    model_path=Config.LLM_MODEL_PATH,
+                    n_gpu_layers=Config.GPU_LAYERS_OFFLOAD,
+                    n_ctx=Config.LLM_CTX_LENGTH,
+                    verbose=False
+                )
+            except Exception as e:
+                print(f"Warning: Failed to import or initialize llama_cpp: {e}")
 
     def extract(self, block):
         self.load_model()
@@ -65,6 +85,7 @@ Hãy trả về kết quả dưới dạng danh sách thực thể JSON khớp c
         response = self.llm(
             prompt,
             max_tokens=512,
+            temperature=0.0,
             grammar=GBNF_GRAMMAR
         )
         output_text = response["choices"][0]["text"]
