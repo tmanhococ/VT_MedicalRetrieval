@@ -94,6 +94,11 @@ def main():
     output_dir = Config.OUTPUT_DIR
     os.makedirs(output_dir, exist_ok=True)
     
+    # Debug prints to trace Colab folder structure
+    existing_jsons = [f for f in os.listdir(output_dir) if f.endswith(".json")]
+    print(f"DEBUG: Thư mục đầu ra thực tế: {os.path.abspath(output_dir)}")
+    print(f"DEBUG: Tìm thấy {len(existing_jsons)} file kết quả cũ trong thư mục này.")
+    
     # Issue 1: Instantiate LLMExtractor once
     extractor = LLMExtractor()
     
