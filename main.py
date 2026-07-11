@@ -58,6 +58,17 @@ def run_pipeline_for_text(text, extractor=None):
         if not raw_ents:
             continue
             
+        # Merge block-level default assertions (e.g. isHistorical) for applicable entity types
+        default_assertions = block.get("default_assertion_hint", [])
+        if default_assertions:
+            for ent in raw_ents:
+                if ent.get("type") in ["CHẨN_ĐOÁN", "THUỐC", "TRIỆU_CHỨNG"]:
+                    if "assertions" not in ent or ent["assertions"] is None:
+                        ent["assertions"] = []
+                    for ass in default_assertions:
+                        if ass not in ent["assertions"]:
+                            ent["assertions"].append(ass)
+                            
         # Step 3: Resolve Position
         resolved_ents = PositionResolver.resolve(text, raw_ents)
         

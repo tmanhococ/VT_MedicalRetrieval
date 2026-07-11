@@ -19,7 +19,9 @@ def test_prompt_generation():
     prompt = LLMExtractor.build_prompt(block)
     assert "sốt cao" in prompt or "TRIỆU_CHỨNG" in prompt
 
-def test_extract_fallback_when_no_model():
+def test_extract_fallback_when_no_model(monkeypatch):
+    import src.config
+    monkeypatch.setattr(src.config.Config, "LLM_MODEL_PATH", "non_existent_path.gguf")
     extractor = LLMExtractor()
     block = {
         "content": "Bệnh nhân sốt cao.",

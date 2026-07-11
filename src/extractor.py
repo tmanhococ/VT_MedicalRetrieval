@@ -47,6 +47,16 @@ Kết quả JSON:
   {{"text": "Paracetamol", "type": "THUỐC", "assertions": [], "med_brand": null, "med_ingredient": "Paracetamol", "med_strength": null, "med_form": null}}
 ]
 
+Ví dụ 3:
+Văn bản: "kết quả xét nghiệm: WBC: 14.43; glucose: 6.2 mmol/l."
+Kết quả JSON:
+[
+  {{"text": "WBC", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "med_brand": null, "med_ingredient": null, "med_strength": null, "med_form": null}},
+  {{"text": "14.43", "type": "KẾT_QUẢ_XÉT_NGHIỆM", "assertions": [], "med_brand": null, "med_ingredient": null, "med_strength": null, "med_form": null}},
+  {{"text": "glucose", "type": "TÊN_XÉT_NGHIỆM", "assertions": [], "med_brand": null, "med_ingredient": null, "med_strength": null, "med_form": null}},
+  {{"text": "6.2 mmol/l", "type": "KẾT_QUẢ_XÉT_NGHIỆM", "assertions": [], "med_brand": null, "med_ingredient": null, "med_strength": null, "med_form": null}}
+]
+
 Gợi ý phân khu hiện tại:
 - Nhãn ưu tiên: {type_hint}
 - Assertion mặc định: {assertion_hint}
@@ -102,7 +112,7 @@ Hãy trả về kết quả dưới dạng danh sách thực thể JSON khớp c
         # Generate with grammar enforcement
         response = self.llm(
             prompt,
-            max_tokens=512,
+            max_tokens=1536,
             temperature=0.0,
             grammar=llama_grammar
         )
