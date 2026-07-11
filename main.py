@@ -94,14 +94,6 @@ def main():
     output_dir = Config.OUTPUT_DIR
     os.makedirs(output_dir, exist_ok=True)
     
-    # Issue 2: Clear old JSON outputs
-    for filename in os.listdir(output_dir):
-        if filename.endswith(".json"):
-            try:
-                os.remove(os.path.join(output_dir, filename))
-            except Exception as e:
-                print(f"Could not remove old file {filename}: {e}")
-                
     # Issue 1: Instantiate LLMExtractor once
     extractor = LLMExtractor()
     
@@ -110,6 +102,13 @@ def main():
     total_files = len(file_list)
     for i, filename in enumerate(file_list, 1):
         idx = filename.split(".")[0]
+        out_file = os.path.join(output_dir, f"{idx}.json")
+        
+        # Skip if output already exists (resumable execution)
+        if os.path.exists(out_file) and os.path.getsize(out_file) > 0:
+            print(f"[{i}/{total_files}] Skipping {filename} (already processed)...")
+            continue
+            
         print(f"[{i}/{total_files}] Processing {filename}...")
         with open(os.path.join(input_dir, filename), "r", encoding="utf-8") as f:
             text = f.read()

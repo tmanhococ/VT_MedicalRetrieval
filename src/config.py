@@ -15,6 +15,6 @@ class Config:
     GPU_LAYERS_OFFLOAD = int(os.environ.get("GPU_LAYERS_OFFLOAD", -1 if os.environ.get("COLAB_GPU") else 0))
     
     # Context Length
-    LLM_CTX_LENGTH = int(os.environ.get("LLM_CTX_LENGTH", 2048))
+    LLM_CTX_LENGTH = int(os.environ.get("LLM_CTX_LENGTH", 4096))
 
 
