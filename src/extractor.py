@@ -5,11 +5,12 @@ from src.config import Config
 # GBNF Grammar String to enforce JSON schema output
 GBNF_GRAMMAR = r"""
 root ::= "[" ws ( object ( "," ws object )* )? ws "]"
-object ::= "{" ws ( "\"text\"" ws ":" ws string "," ws "\"type\"" ws ":" ws type_enum "," ws "\"assertions\"" ws ":" ws array_assertion "," ws "\"med_brand\"" ws ":" ws (string | "null") "," ws "\"med_ingredient\"" ws ":" ws (string | "null") "," ws "\"med_strength\"" ws ":" ws (string | "null") "," ws "\"med_form\"" ws ":" ws (string | "null") ) "}"
-array_assertion ::= "[" ws ( assertion_enum ( "," ws assertion_enum )* )? ws "]"
-assertion_enum ::= "\"isNegated\"" | "\"isHistorical\"" | "\"isFamily\""
-type_enum ::= "\"TRIỆU_CHỨNG\"" | "\"TÊN_XÉT_NGHIỆM\"" | "\"KẾT_QUẢ_XÉT_NGHIỆM\"" | "\"CHẨN_ĐOÁN\"" | "\"THUỐC\""
+object ::= "{" ws "\"text\"" ws ":" ws string "," ws "\"type\"" ws ":" ws type-enum "," ws "\"assertions\"" ws ":" ws array-assertion "," ws "\"med_brand\"" ws ":" ws string-or-null "," ws "\"med_ingredient\"" ws ":" ws string-or-null "," ws "\"med_strength\"" ws ":" ws string-or-null "," ws "\"med_form\"" ws ":" ws string-or-null "}"
+array-assertion ::= "[" ws ( assertion-enum ( "," ws assertion-enum )* )? ws "]"
+assertion-enum ::= "\"isNegated\"" | "\"isHistorical\"" | "\"isFamily\""
+type-enum ::= "\"TRIỆU_CHỨNG\"" | "\"TÊN_XÉT_NGHIỆM\"" | "\"KẾT_QUẢ_XÉT_NGHIỆM\"" | "\"CHẨN_ĐOÁN\"" | "\"THUỐC\""
 string ::= "\"" ([^"\\] | "\\" [\"\\/bfnrt] | "\\u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F])* "\""
+string-or-null ::= string | "null"
 ws ::= [ \t\n\r]*
 """
 
@@ -87,12 +88,23 @@ Hãy trả về kết quả dưới dạng danh sách thực thể JSON khớp c
             return []
             
         prompt = self.build_prompt(block)
+        
+        # Compile grammar object
+        from llama_cpp import LlamaGrammar
+        try:
+            # Escape non-ASCII characters for llama-cpp GBNF compiler compatibility
+            escaped_grammar = "".join(f"\\u{ord(c):04x}" if ord(c) > 127 else c for c in GBNF_GRAMMAR)
+            llama_grammar = LlamaGrammar.from_string(escaped_grammar)
+        except Exception as e:
+            print(f"Warning: Failed to compile GBNF grammar: {e}")
+            llama_grammar = None
+            
         # Generate with grammar enforcement
         response = self.llm(
             prompt,
             max_tokens=512,
             temperature=0.0,
-            grammar=GBNF_GRAMMAR
+            grammar=llama_grammar
         )
         output_text = response["choices"][0]["text"]
         try:

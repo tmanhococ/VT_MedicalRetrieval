@@ -94,23 +94,25 @@ def main():
     # Issue 1: Instantiate LLMExtractor once
     extractor = LLMExtractor()
     
-    for filename in os.listdir(input_dir):
-        if filename.endswith(".txt"):
-            idx = filename.split(".")[0]
-            with open(os.path.join(input_dir, filename), "r", encoding="utf-8") as f:
-                text = f.read()
-            
-            result = run_pipeline_for_text(text, extractor=extractor)
-            
-            try:
-                jsonschema.validate(instance=result, schema=OUTPUT_SCHEMA)
-            except jsonschema.ValidationError as e:
-                print(f"Validation error for record {idx}: {e}")
-                raise e
-            
-            out_file = os.path.join(output_dir, f"{idx}.json")
-            with open(out_file, "w", encoding="utf-8") as out_f:
-                json.dump(result, out_f, ensure_ascii=False, indent=2)
+    file_list = [f for f in os.listdir(input_dir) if f.endswith(".txt")]
+    total_files = len(file_list)
+    for i, filename in enumerate(file_list, 1):
+        idx = filename.split(".")[0]
+        print(f"[{i}/{total_files}] Processing {filename}...")
+        with open(os.path.join(input_dir, filename), "r", encoding="utf-8") as f:
+            text = f.read()
+        
+        result = run_pipeline_for_text(text, extractor=extractor)
+        
+        try:
+            jsonschema.validate(instance=result, schema=OUTPUT_SCHEMA)
+        except jsonschema.ValidationError as e:
+            print(f"Validation error for record {idx}: {e}")
+            raise e
+        
+        out_file = os.path.join(output_dir, f"{idx}.json")
+        with open(out_file, "w", encoding="utf-8") as out_f:
+            json.dump(result, out_f, ensure_ascii=False, indent=2)
                 
     # Zip output
     zip_path = os.path.join(Config.BASE_DIR, "output.zip")
