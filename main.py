@@ -106,6 +106,7 @@ def main():
     extractor = LLMExtractor()
     
     file_list = [f for f in os.listdir(input_dir) if f.endswith(".txt")]
+    file_list.sort(key=lambda x: int(x.split(".")[0]) if x.split(".")[0].isdigit() else x)
     total_files = len(file_list)
     for i, filename in enumerate(file_list, 1):
         idx = filename.split(".")[0]
